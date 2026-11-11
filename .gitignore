@@ -1,0 +1,27 @@
+.env
+.env.*
+!.env.example
+!.env.production.example
+**/.env
+**/.env.*
+!**/.env.example
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+npm-debug.log*
+backend/uploads/
+users.json
+*.json.bak
+
+# Carpetas que no van al repo
+taskview-community-main/
+taskview-prueba/
+frontend copy/
+.agents/
+Sidebar.jsx
+reporte_cambios_ticket.txt
+
+# Archivos con datos reales
+database/usuarios_reportes.sql
+estructuraDbSistema.sql

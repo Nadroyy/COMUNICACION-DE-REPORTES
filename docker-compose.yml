@@ -1,0 +1,66 @@
+# ─────────────────────────────────────────────────────────────
+# Módulo de Tickets — Alianxa Group
+# BD externa: 50.28.103.119 (reportes + roles/users/warehouses)
+# La interfaz en 3156 proxifica /api al backend en la red interna de Docker.
+# El puerto 3155 del backend se conserva para integraciones existentes.
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  backend:
+    image: ${DOCKER_USER:-alianxasoft}/tickets-backend:${IMAGE_TAG:-latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${BACKEND_CONTAINER_NAME:-tickets_backend}
+    restart: unless-stopped
+    environment:
+      DB_HOST: ${DB_HOST:?DB_HOST es obligatorio}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_TIMEZONE: ${DB_TIMEZONE:--05:00}
+      DB_USER: ${DB_USER:?DB_USER es obligatorio}
+      DB_PASS: ${DB_PASS:?DB_PASS es obligatorio}
+      DB_NAME: ${DB_NAME:-reportes}
+      DB_MAIN_NAME: ${DB_MAIN_NAME:-reportes}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es obligatorio}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      PORT: 3155
+      NODE_ENV: production
+      UPLOADS_DIR: /app/uploads
+      AUTH_MODE: host-jwt
+      HOST_JWT_SECRET: ${HOST_JWT_SECRET:?HOST_JWT_SECRET es obligatorio en modo host-jwt}
+      INTEGRATION_SECRET: ${INTEGRATION_SECRET:?INTEGRATION_SECRET es obligatorio}
+      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL es obligatorio}
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS es obligatorio}
+      SISTEMA_PRINCIPAL_URL: ${SISTEMA_PRINCIPAL_URL:?SISTEMA_PRINCIPAL_URL es obligatorio}
+    ports:
+      - "${BACKEND_HOST_PORT:-3155}:3155"
+    networks:
+      tickets_net:
+        aliases:
+          - backend
+    volumes:
+      - report_uploads:/app/uploads
+
+  frontend:
+    image: ${DOCKER_USER:-alianxasoft}/tickets-frontend:${IMAGE_TAG:-latest}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_REALTIME_URL: ${VITE_REALTIME_URL:-}
+    container_name: ${FRONTEND_CONTAINER_NAME:-tickets_frontend}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_HOST_PORT:-3156}:80"
+    networks:
+      - tickets_net
+
+networks:
+  tickets_net:
+    driver: bridge
+
+volumes:
+  report_uploads:
